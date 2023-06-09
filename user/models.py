@@ -26,7 +26,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         (USER, 'User')
     ]
 
-    id = models.UUIDField(default=uuid4, primary_key=True)
+    # id = models.UUIDField(default=uuid4, primary_key=True)
     email = models.EmailField(gettext_lazy('email address'), unique=True, null=False)
     first_name = models.CharField(max_length=128, null=False)
     last_name = models.CharField(max_length=128, null=False)

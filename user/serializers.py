@@ -2,9 +2,6 @@ from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import obtain_auth_token
-
-from .models import CustomUser
 
 User = get_user_model()
 
@@ -18,17 +15,28 @@ class CreateAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'gender', 'password', 'password2', 'role']
+        fields = ['id', 'email', 'first_name', 'last_name', 'gender', 'password', 'password2', 'role']
         extra_kwargs = {
+            'id': {'read_only': True},
             'password': {'write_only': True}
         }
 
     def validate(self, data):
+        '''Account creation validation function'''
+
         # validate password
         if data['password'] != data['password2']:
-            raise serializers.ValidationError({'error': 'Your passwords do not match'})
-        if User.objects.filter(email=data['email']).exists():
+            raise serializers.ValidationError({'message': 'Your passwords do not match'})
+        
+        # check if email exists
+        elif User.objects.filter(email=data['email']).exists():
             raise serializers.ValidationError({'message': 'Email already exists'})
+        
+        # check if gender and role choices areb valid
+        elif len(data['gender']) > 1:
+            raise serializers.ValidationError({'message': 'Gender choice is not valid'})
+        elif data['role'] > 2:
+            raise serializers.ValidationError({'message': 'Role choice is not valid'})
         
         # validate password
         validate_password(data['password'])
@@ -36,6 +44,8 @@ class CreateAccountSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
+        '''Account creation function'''
+
         # get all validated data
         email = validated_data.get('email')
         first_name = validated_data.get('first_name')
@@ -71,31 +81,27 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(required=True)
     
     def validate(self, data):
+        '''Authentication validation function'''
+
         # authenticate user with email and password
         user = authenticate(email=data['email'], password=data['password'])
 
         # check for existence of user
         if user is None:
-            raise serializers.ValidationError({'error': 'User does not exist'})
+            raise serializers.ValidationError({'message': 'User does not exist'})
         
         # remove fields from dictionary that you don't want to see in JSON response
-        data.pop('email')
+        email = data.pop('email')
         data.pop('password')
 
         # get or create a new token
-        token, created = Token.objects.get_or_create(user=user)
+        token= Token.objects.get_or_create(user=user)
 
-        token = Token.objects.get_or_create(user=user)
-
-        # if token already exists ie if user has logged in before
-        if not created:
-            token.delete()
-            token = Token.objects.create(user=user)
-
-        data['message'] = f'Welcome {user}'
-        data['token'] = token.key
+        data['message'] = f'Welcome {email}'
+        data['token'] = token[0].key
 
         return data
+
     
 class UpdateDetailsSerializer(serializers.ModelSerializer):
 
@@ -105,18 +111,46 @@ class UpdateDetailsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name', 'profile_pic']
+        fields = ['email', 'first_name', 'last_name', 'profile_pic', 'role']
     
     def update(self, instance, validated_data):
-        # instance.first_name = validated_data.get('first_name', instance.first_name)
-        # instance.last_name = validated_data.get('last_name', instance.last_name)
-        # instance.email = validated_data.get('email', instance.email)
-        # instance.profile_pic = validated_data.get('profile_pic', instance.profile_pic)
+        '''Update details function'''
 
-        # you can do this
         for key, value in validated_data.items():
             setattr(instance, key, value)
 
         instance.save()
 
         return instance
+    
+
+class ChangePasswordSerializer(serializers.Serializer):
+    '''
+        Serializer to change user password
+    '''
+
+    email = serializers.EmailField(required=True)
+    password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True, write_only=True)
+
+    def validate(self, data):
+        # since password is being changed, there is a need to confirm if the user changing the password entered the right old password
+        user = authenticate(email=data['email'], password=data['password'])
+
+        if user is None:
+            raise serializers.ValidationError({'message': 'User credentials incorrect. Check your email and password and try again.'})
+        elif data['password'] == data['new_password']:
+            raise serializers.ValidationError({'message': 'New password cannot be the same as old password.'})
+        
+        validate_password(data['new_password'])
+        return data
+    
+    def update(self, instance, validated_data):
+        instance.new_password = validated_data.get('password', instance.new_password)
+        # instance.new_password = validated_data.get('new_password', instance.new_password)
+        
+        # save new instance and return it
+        instance.save()
+        return instance
+    
+        # Note: This may not work because password is read only so test and check

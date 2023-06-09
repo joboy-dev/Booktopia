@@ -1,5 +1,6 @@
 from django.shortcuts import render
 
+from django.contrib.auth import get_user_model
 from rest_framework import generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -8,7 +9,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser
 
 from . import serializers
-from .models import CustomUser
+
+User = get_user_model()
 
 # Create your views here.
 class RegisterView(generics.CreateAPIView):
@@ -20,11 +22,13 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = serializers.CreateAccountSerializer
     
     def perform_create(self, serializer):
+        # check if serializer is valid
         if serializer.is_valid():
+            # save serializer
             serializer.save()
             return Response({'message': 'Registration successful'})
-        
-        return Response({'error':serializer.errors})
+        else:
+            return Response(serializer.errors)
     
 
 class LoginView(APIView):
@@ -69,7 +73,28 @@ class UpdateDetailsView(generics.RetrieveUpdateAPIView):
     serializer_class = serializers.UpdateDetailsSerializer
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser]
+
+    def get_queryset(self):
+        current_user = self.request.user
+        return User.objects.filter(pk=current_user.pk)
     
+    # get current user object
+    def get_object(self):
+        return self.request.user
+    
+
+class ChangePasswordView(generics.RetrieveUpdateAPIView):
+    '''
+        View to change user password
+    '''
+
+    serializer_class = serializers.ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        current_user = self.request.user
+        return User.objects.filter(pk=current_user.pk)
+
     def get_object(self):
         return self.request.user
     
