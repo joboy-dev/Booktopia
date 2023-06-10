@@ -132,25 +132,28 @@ class ChangePasswordSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(required=True)
     new_password = serializers.CharField(required=True, write_only=True)
+    confirm_password = serializers.CharField(required=True, write_only=True)
+    
+    def update(self, instance, validated_data):
+        email = validated_data.get('email')
+        old_password = validated_data.get('password')
+        new_password = validated_data.get('new_password')
+        confirm_password = validated_data.get('confirm_password')
 
-    def validate(self, data):
-        # since password is being changed, there is a need to confirm if the user changing the password entered the right old password
-        user = authenticate(email=data['email'], password=data['password'])
+        # if not instance.check_password()
+        user = authenticate(email=email, password=old_password)
 
         if user is None:
             raise serializers.ValidationError({'message': 'User credentials incorrect. Check your email and password and try again.'})
-        elif data['password'] == data['new_password']:
+        elif old_password == new_password:
             raise serializers.ValidationError({'message': 'New password cannot be the same as old password.'})
+        elif new_password != confirm_password:
+            raise serializers.ValidationError({'message': 'New password and confirm password field has to be the same.'})
         
-        validate_password(data['new_password'])
-        return data
-    
-    def update(self, instance, validated_data):
-        instance.new_password = validated_data.get('password', instance.new_password)
-        # instance.new_password = validated_data.get('new_password', instance.new_password)
-        
-        # save new instance and return it
+        validate_password(new_password)
+        instance.set_password(new_password)
+
         instance.save()
+
         return instance
     
-        # Note: This may not work because password is read only so test and check

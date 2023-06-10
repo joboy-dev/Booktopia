@@ -98,6 +98,6 @@ class ChangePasswordView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
     
-
-class DeleteUserView:
-    pass
+    def update(self, request, *args, **kwargs):
+        super().update(request, *args, **kwargs)
+        return Response({'message': 'Password change successful'})

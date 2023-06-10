@@ -49,6 +49,8 @@ class AuthorBooksView(generics.ListAPIView):
         current_user = self.request.user
         books = Book.objects.filter(author=current_user)
 
+        self.check_object_permissions(self.request, books)
+
         # check for any book object
         if books.exists():
             serializer = self.serializer_class(books, many=True)
