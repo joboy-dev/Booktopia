@@ -37,14 +37,14 @@ class AddBookSerializer(serializers.ModelSerializer):
         book_file = validated_data.get('book_file')
         book_cover_picture = validated_data.get('book_cover_picture')
         # get current user
-        author = self.context['request'].user
+        book_author = self.context['request'].user
 
         # create a new book object
         new_book = Book(title=book_title, 
                         description=book_description, 
                         book_file=book_file, 
                         book_cover_picture=book_cover_picture, 
-                        author=author
+                        author=book_author
                     )
         
         # save book object and return it
