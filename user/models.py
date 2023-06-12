@@ -7,6 +7,7 @@ from .manager import CustomUserManager
 
 # Create your models here.
 class CustomUser(AbstractBaseUser, PermissionsMixin):
+    '''Custom user model'''
 
     # gender choices
     MALE = 'M'

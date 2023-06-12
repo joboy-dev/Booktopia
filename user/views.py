@@ -23,12 +23,10 @@ class RegisterView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         # check if serializer is valid
-        if serializer.is_valid():
-            # save serializer
-            serializer.save()
-            return Response({'message': 'Registration successful'})
-        else:
-            return Response(serializer.errors)
+        serializer.is_valid(raise_exception=True)
+        # save serializer
+        serializer.save()
+        return Response({'message': 'Registration successful'})
     
 
 class LoginView(APIView):

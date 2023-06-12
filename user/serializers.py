@@ -140,7 +140,6 @@ class ChangePasswordSerializer(serializers.Serializer):
         new_password = validated_data.get('new_password')
         confirm_password = validated_data.get('confirm_password')
 
-        # if not instance.check_password()
         user = authenticate(email=email, password=old_password)
 
         if user is None:

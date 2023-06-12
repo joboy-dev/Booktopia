@@ -11,4 +11,9 @@ class IsBookAuthorOrReadOnly(BasePermission):
 class IsAuthorRole(BasePermission):
     def has_object_permission(self, request, view, obj):
         return request.user.role == 1
+    
+
+class IsCommentAuthor(BasePermission):
+    def has_object_permission(self, request, view, obj):
+        return request.user == obj.commenter
         
