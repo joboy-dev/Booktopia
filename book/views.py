@@ -166,6 +166,32 @@ class CommentDetailsView(generics.RetrieveUpdateDestroyAPIView):
         
     def perform_update(self, serializer):
         try:
+            pk = self.kwargs['pk']
+
+            comment = Comment.objects.get(pk=pk)
+            book_obj = comment.book
+
+            # get existing sum of all ratings
+            existing_ratings_sum = book_obj.average_rating * book_obj.no_of_ratings
+
+            # get current rating
+            current_rating = comment.rating
+
+            # subtract current rating from existing sum of ratings
+            new_ratings_sum = existing_ratings_sum - current_rating
+
+            # get updated rating from validated data
+            updated_rating = serializer.validated_data['rating']
+
+            # calculate the difference between updated rating and current rating
+            rating_difference = updated_rating - current_rating
+
+            # add the rating difference to the sum of ratings
+            new_ratings_sum += rating_difference
+
+            book_obj.average_rating = new_ratings_sum / book_obj.no_of_ratings
+            book_obj.save()
+
             super().perform_update(serializer)
             return Response(serializer.data)
         except Comment.DoesNotExist:
