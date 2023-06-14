@@ -188,7 +188,34 @@ class CommentDetailsSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         for key, value in validated_data.items():
             setattr(instance, key, value)
+
+        pk = self.context['view'].kwargs.get('pk')
+
+        comment = Comment.objects.get(pk=pk)
+        book_obj = comment.book
+
+        # get existing sum of all ratings
+        existing_ratings_sum = book_obj.average_rating * book_obj.no_of_ratings
+
+        # get current rating
+        current_rating = comment.rating
+
+        # subtract current rating from existing sum of ratings
+        subtracted_ratings_sum = existing_ratings_sum - current_rating
+
+        # get updated rating from validated data
+        updated_rating = validated_data.get('rating')
+
+        # get new rating sum
+        new_ratings_sum = subtracted_ratings_sum + updated_rating
+
+        # FOR DEBUGGING PORPOSES
+        print(f'Current rating = {current_rating}')
+        print(f'Updated rating = {updated_rating}')
+        print(f'New ratings sum = {new_ratings_sum}')
+
+        book_obj.average_rating = new_ratings_sum / book_obj.no_of_ratings
+        book_obj.save()
+
         instance.save()
-
-
         return instance    
