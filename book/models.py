@@ -21,6 +21,9 @@ class Book(models.Model):
     def __str__(self):
         return f'{self.title} | {self.author.first_name}, {self.author.last_name}'
 
+    class Meta:
+        ordering = ['-updated']
+
 
 class Comment(models.Model):
     '''Comments model'''
@@ -34,6 +37,9 @@ class Comment(models.Model):
 
     def __str__(self):
         return f'{self.commenter.email} | {str(self.rating)}'
+    
+    class Meta:
+        ordering = ['-updated']
 
 
 
