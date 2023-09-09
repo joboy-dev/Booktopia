@@ -9,5 +9,4 @@ The API supports the following features:
 5. Users commenting and rating a particular book.
 
 ## Link to Postman docs
-[https://www.postman.com/restless-satellite-461647/workspace/joboy-dev-public/collection/25448393-a59d27d3-b677-4402-9798-9f1e36166e19?action=share&creator=25448393]
-(https://www.postman.com/restless-satellite-461647/workspace/joboy-dev-public/collection/25448393-a59d27d3-b677-4402-9798-9f1e36166e19?action=share&creator=25448393)
+[https://documenter.getpostman.com/view/25448393/2s9YC1WuHT]
